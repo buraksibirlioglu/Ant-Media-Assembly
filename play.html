@@ -1,0 +1,131 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+pageEncoding="UTF-8"%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Ant Media Server</title>
+
+<!-- 1. skin -->
+<link rel="stylesheet"
+	href="//releases.flowplayer.org/7.2.1/skin/skin.css">
+
+<!-- 3. flowplayer -->
+<script src="//releases.flowplayer.org/7.2.1/flowplayer.min.js"></script>
+
+<script src="//releases.flowplayer.org/hlsjs/flowplayer.hlsjs.min.js"></script>
+
+<script src="js/fetch.js"></script>
+<script src="js/promise.min.js"></script>
+</head>
+<body>
+
+	<div id="video-player" class="fp-slim"></div>
+	<script>
+	
+	
+	function isMobile() { 
+		if( navigator.userAgent.match(/Android/i)
+			  || navigator.userAgent.match(/webOS/i)
+			  || navigator.userAgent.match(/iPhone/i)
+			  || navigator.userAgent.match(/iPad/i)
+			  || navigator.userAgent.match(/iPod/i)
+			  || navigator.userAgent.match(/BlackBerry/i)
+			  || navigator.userAgent.match(/Windows Phone/i)
+			  )
+		{
+			     return true;
+		}
+		else {
+			     return false;
+		}
+	}
+
+	var name = "<%= request.getParameter("name") %>";
+	
+	var pAutoplay = "<%= request.getParameter("autoplay") %>";
+	var autoPlay = false;
+	if (pAutoplay == "true" && !isMobile()) {
+		autoPlay = true;
+	}
+	
+	function initializePlayer(name, extension) {
+		var type;
+		var liveStream = false;
+		if (extension == "mp4") {
+			type = "video/mp4";
+			liveStream = false;
+		}
+		else if (extension == "m3u8") {
+			type = "application/x-mpegurl";
+			liveStream = true;
+		}
+		else {
+			console.log("Unknown extension: " + extension);
+			return;
+		}
+		
+		var preview = name;
+		if (name.endsWith("_adaptive")) {
+			preview = name.substring(0, name.indexOf("_adaptive"));
+		}
+		
+		flowplayer("#video-player", {
+			poster: "previews/" + preview + ".png",
+			autoplay: autoPlay,
+		    ratio: 9/16,
+		    clip: {
+		    	  live: liveStream,
+		      sources: [
+		        { type: type,
+		          src: "streams/"+ name +"." + extension } 
+		      ]
+		    }
+		  });
+		
+	}
+	
+	//ask if adaptive m3u8 file
+	fetch("streams/"+ name +"_adaptive.m3u8", {method:'HEAD'})
+		.then(function(response) {
+			if (response.status == 200) {
+				// adaptive m3u8 exists,play it
+				initializePlayer(name+"_adaptive", "m3u8");
+			}
+			else 
+			{
+				//adaptive m3u8 not exists, try m3u8 exists.
+				fetch("streams/"+ name +".m3u8", {method:'HEAD'})
+				.then(function(response) {
+					if (response.status == 200) {
+						//m3u8 exists, play it
+						initializePlayer(name, "m3u8");
+					}
+					else {
+						//no m3u8 exists, try vod file
+						fetch("streams/"+ name +".mp4", {method:'HEAD'})
+						.then(function(response) {
+							if (response.status == 200) {
+								//mp4 exists, play it
+								initializePlayer(name, "mp4");
+							}
+							else {
+								console.log("No stream found");
+								
+							}
+						}).catch(function(err) {
+							console.log("Error: " + err);
+						});
+						
+					}
+				}).catch(function(err) {
+					console.log("Error: " + err);
+				});
+			}
+		}).catch(function(err) {
+			console.log("Error: " + err);
+		});
+
+</script>
+
+</body>
+</html>

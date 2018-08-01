@@ -1,0 +1,200 @@
+body {
+ 	position: fixed; 
+    	overflow-y: scroll;
+    	width: 100%;
+}
+
+/* Everything but the jumbotron gets side spacing for mobile first views */
+.header, .marketing, .footer {
+	padding-right: 15px;
+	padding-left: 15px;
+}
+
+/* Custom page header */
+.header {
+	padding-bottom: 20px;
+	border-bottom: 1px solid #e5e5e5;
+}
+/* Make the masthead heading the same height as the navigation */
+.header h3 {
+	margin-top: 0;
+	margin-bottom: 0;
+	line-height: 40px;
+}
+
+/* Custom page footer */
+.footer {
+	padding-top: 19px;
+	color: #777;
+	border-top: 1px solid #e5e5e5;
+}
+
+/* Customize container */
+@media ( min-width : 768px) {
+	.container {
+		max-width: 730px;
+	}
+}
+
+.container-narrow>hr {
+	margin: 30px 0;
+}
+
+/* Main marketing message and sign up button */
+.jumbotron {
+	text-align: -webkit-center;
+}
+
+/* Responsive: Portrait tablets and up */
+@media screen and (min-width: 768px) {
+	/* Remove the padding we set earlier */
+	.header, .marketing, .footer {
+		padding-right: 0;
+		padding-left: 0;
+	}
+	/* Space out the masthead */
+	.header {
+		margin-bottom: 30px;
+	}
+	/* Remove the bottom border on the jumbotron for visual effect */
+	.jumbotron {
+		border-bottom: 0;
+	}
+}
+#snackButton{
+
+	min-width: 250px;
+    	margin-left: -125px;
+    	background-color: #333;
+    	color: #fff;
+    	text-align: center;
+    	border-radius: 2px;
+    	padding: 16px;
+    	position: fixed;
+    	z-index: 3;
+    	left: 50%;
+    	bottom: 130px;
+    	font-size: 17px;
+}
+
+#chatBar {
+    height: 70%;
+    width: 25%;
+    color: #fff;
+    background-color: #fff;
+    position: fixed;
+    z-index: 4;
+    bottom: 0px;
+    left:0px;
+    font-size: 17px;
+}
+
+#localVideoBar{
+    height: 16%;
+    width: 200px;
+    color: #fff;
+    position: fixed;
+    z-index: 5;
+    top: 20px;
+    left:20px;
+}
+
+#remoteBar {
+    height: 100%;
+    color: #fff;
+    position: fixed;
+    z-index: 1;
+    top: 60px;
+    right:0px;
+    font-size: 17px;
+    width: 30%;
+}
+
+#controlBar {
+
+    color: #fff;
+    position: fixed;
+    z-index: 3;
+    bottom: 30px;
+    width: 100%;
+    text-align: center;
+}
+	
+#controlBar2 {
+
+    color: #fff;
+    position: fixed;
+    z-index: 3;
+    top: 10px;
+    right:10px;
+    min-width:35%;
+    text-align:right;
+}
+
+
+@-webkit-keyframes fadein {
+    from {bottom: 0; opacity: 0;} 
+    to {bottom: 0px; opacity: 0;}
+}
+
+@keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 0px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+    from {bottom: 0px; opacity: 1;} 
+    to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+    from {bottom: 0px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+}
+div.scrollmenu {
+    overflow: auto;
+    white-space: nowrap;
+}
+
+div.scrollmenu a {
+    display: inline-block;
+    color: white;
+    text-align: center;
+    padding: 14px;
+    text-decoration: none;
+}
+
+div.scrollmenu a:hover {
+    background-color: #777;
+}
+.vertical-menu {
+    overflow-y: auto;
+    object-fit: fill;
+    text-align: right;
+}
+
+.vertical-menu video{
+	margin-top:10px;
+	margin-bottom:10px;
+	width: 35%;
+}
+.btnn{
+	background-color:rgba(0, 0, 0, 0.5);;
+	min-width:90px;
+	border:1px;
+	padding:5px;
+	margin: 5px;
+	border-radius:100%
+}
+.btnn:hover{
+	background-color:#5bc0de;
+}
+.btnn2{
+	background-color:rgba(0, 0, 0, 0.5);;
+	border:1px;
+}
+.btnn2:hover{
+	background-color:#5bc0de;
+}
+@keyframes blink { 50% { border-color: red; }  }
+

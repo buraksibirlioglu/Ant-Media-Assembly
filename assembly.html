@@ -1,0 +1,444 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+pageEncoding="UTF-8"%>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+	integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+	crossorigin="anonymous">
+<link rel="stylesheet" href="css/assembly.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+<script src="js/webrtc_adaptor.js"></script>
+<script src="js/volume-meter.js"></script>
+
+<script
+		src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+</head>
+<body background="assets/app/wait.gif" style="background-size: cover; text-align:center; overflow-y: hidden;">
+	<div id="conference">
+			<video id="remoteVideo0" autoplay hidden muted style="height: 100%; width: 100%; object-fit: fill;"></video>
+		<div id="remoteBar"><div id="remoteList" class= "vertical-menu" > </div></div>
+		<div id="localVideoBar"><video id="localVideo" autoplay muted style="height: 100%; width: 100%;border-radius: 10px;"></video></div>
+		<div id="chatBar" hidden ></div>
+		<input type="text" id="linkInput" style="background: #484749;border:  none;">
+		<div id="controlBar2">
+				
+				<button onclick="showMessage()" class="btnn2"id="link_button" title="Share Link" hidden ><i class="fas fa-user-plus fa-2x"style="padding: 10px;" ></i></button>
+				<button onclick="shareScreen()" class="btnn2"id="en_button" title="Share Screen" hidden ><i class="fa fa-desktop fa-2x"style="padding: 10px;" ></i></button>
+				<button id="record"  class="btnn2" title="Record"  style="color:red" hidden><i class="far fa-dot-circle fa-2x" style="padding: 10px;"></i></button>
+				<button class="btnn2" id="menuButton" title="Toolbar" onclick="openMenu()" ><i class="fas fa-cog fa-2x"style="padding: 10px;" ></i></button>
+		</div>
+		<div id="controlBar">
+			<button onclick="muteMic()" class="btnn"
+				id="mute_button" title="Mute/Unmute"><i class="fa fa-microphone fa-3x"style="padding: 10px;"></i></button>
+			<button onclick="leaveRoom()" class="btnn"
+				id="stop_publish_button" title="Leave Room" style="color:red"><i class="fas fa-phone fa-3x" style="padding: 10px;"></i></button>
+			<button onclick="camOff()" class="btnn"
+				id="cam_button" title="Camera ON/OFF"><i class="fas fa-video fa-3x" style="padding: 10px;"></i></button>
+			
+		</div>
+	</div>
+</body>
+<script>
+
+	var stop_publish_button = document.getElementById("stop_publish_button");
+
+	var centerId;
+	var remoteVideos = new Array();
+	var remoteVideoIndex = 0;
+	var camState=1;
+	var micState=1;
+	var publishStreamId;
+	var enablePublish=0;
+	enablePublish=getParameterByName("ep");
+
+	function showMessage() {
+		var copyText = document.getElementById("linkInput");
+		copyText.value =window.location.href;
+  		copyText.select();
+  		document.execCommand("copy");
+    		alert(" Link Copied : "+ window.location.href);
+	}
+
+	function openMenu(){
+		document.getElementById("link_button").removeAttribute("hidden");
+		//if(enablePublish==1)
+		//document.getElementById("en_button").removeAttribute("hidden");
+		document.getElementById("record").removeAttribute("hidden");
+		document.getElementById("menuButton").onclick = function() {closeMenu()};
+	}
+	function closeMenu(){
+		document.getElementById("link_button").setAttribute("hidden",true);
+		//if(enablePublish==1)
+		//document.getElementById("en_button").setAttribute("hidden",true);
+		document.getElementById("record").setAttribute("hidden",true);
+		document.getElementById("menuButton").onclick = function() {openMenu()};
+	}
+
+
+	function joinRoom() {
+		console.log(getParameterByName("room"));
+		webRTCAdaptor.joinRoom(getParameterByName("room"));
+	}
+
+	function leaveRoom() {
+		if(enablePublish=="1")
+			webRTCAdaptor.stop(publishStreamId);
+		
+		for(var key in remoteVideos) {
+			console.log("index: " + key);
+			remoteVideos[key].srcObject = null;
+			remoteVideos[key] = null;
+			delete remoteVideos[key];
+			webRTCAdaptor.stop(key);
+		}
+			
+		remoteVideoIndex = 0;
+		sleep(100);
+		window.location.href ="index.html";
+	}
+	
+	function publish(streamName) {
+		publishStreamId = streamName;
+		webRTCAdaptor.publish(streamName);
+	}
+	
+    function startAnimation() {
+
+        $("#broadcastingInfo").fadeIn(800, function () {
+          $("#broadcastingInfo").fadeOut(800, function () {
+        	var state = webRTCAdaptor.signallingState(publishStreamId);
+            if (state != null && state != "closed") {
+            	var iceState = webRTCAdaptor.iceConnectionState(publishStreamId);
+            	if (iceState != null && iceState != "failed" && iceState != "disconnected") {
+              		startAnimation();
+            	}
+            }
+          });
+        });
+
+      }
+
+	var pc_config = null;
+
+	var sdpConstraints = {
+		OfferToReceiveAudio : false,
+		OfferToReceiveVideo : false
+
+	};
+	var mediaConstraints = {
+		video : true,
+		audio : true
+	};
+
+	var websocketURL = "ws://" + location.hostname + ":5080/WebRTCAppEE/websocket";
+	
+	if (location.protocol.startsWith("https")) {
+		websocketURL = "wss://" + location.hostname + ":5443/WebRTCAppEE/websocket";
+	}
+	
+	var localVid;
+	var webRTCAdaptor ;
+	function initial(isplay){
+		webRTCAdaptor= new WebRTCAdaptor({
+		websocket_url : websocketURL,
+		mediaConstraints : mediaConstraints,
+		peerconnection_config : pc_config,
+		sdp_constraints : sdpConstraints,
+		localVideoId : "localVideo",
+		isPlayMode: isplay,
+		debug:true,
+		callback : function(info, obj) 
+		{
+			
+			if (info == "initialized") {
+				console.log("initialized");
+				if(enablePublish=="1")
+					stop_publish_button.disabled = true;
+				joinRoom();
+				
+			}
+			else if (info == "joinedTheRoom") 
+			{
+				console.log("joined the room ");
+				console.log(obj);
+				document.getElementById("localVideo").setAttribute("hidden","true");				
+				
+				if(enablePublish=="1"){
+					publish(obj.streamId);
+					document.getElementById("remoteVideo0").removeAttribute("hidden");
+					document.getElementById("remoteVideo0").srcObject=document.getElementById("localVideo").srcObject;
+				}
+				else{
+					
+					var elem = document.getElementById("en_button");
+					elem.parentNode.removeChild(elem);
+					elem = document.getElementById("mute_button");
+					elem.parentNode.removeChild(elem);
+					elem = document.getElementById("cam_button");
+					elem.parentNode.removeChild(elem);
+					
+				}
+				localVid=obj.streamId;
+				var streams = obj.streams;
+
+				if (obj.streams != null) {
+					obj.streams.forEach(function(item) {
+				    		console.log(item);
+				    		webRTCAdaptor.play(item);
+					});
+				}
+			}
+			else if (info == "streamJoined") 
+			{
+				console.debug("stream joined with id " + obj.streamId);
+				webRTCAdaptor.play(obj.streamId);
+			}
+			else if (info == "newStreamAvailable") 
+			{	
+				console.debug("new stream available with id: " +  obj.streamId);
+				
+				if (remoteVideos[obj.streamId] == null) {
+					console.log("getting video object from DOM with index: " + remoteVideoIndex);
+					addVideo(obj.streamId);		
+					remoteVideos[obj.streamId] = document.getElementById(obj.streamId);
+					remoteVideoIndex++;
+					
+				}
+				
+				remoteVideos[obj.streamId].srcObject = obj.track;
+				if(remoteVideoIndex==1){
+					document.getElementById("remoteVideo0").removeAttribute("hidden");
+					document.getElementById("localVideo").removeAttribute("hidden");
+					document.getElementById("remoteVideo0").srcObject=obj.track;
+					remoteVideos[obj.streamId].setAttribute("hidden", true);
+					centerId=obj.streamId;				
+				}
+				testAudio(obj.streamId);
+				
+				
+			}
+			else if (info == "streamLeaved") 
+			{
+				console.debug(" stream leaved with id " + obj.streamId);
+				if (remoteVideos[obj.streamId] != null) {
+					
+					remoteVideos[obj.streamId].srcObject = null;
+					remoteVideos[obj.streamId] = null;
+					delete remoteVideos[obj.streamId];
+					removeVid(obj.streamId);
+					remoteVideoIndex--;
+					console.log(remoteVideoIndex);
+				}
+				
+			}
+			else if (info == "publish_started") {
+				//stream is being published
+				console.debug("publish started");
+				stop_publish_button.disabled = false;
+				startAnimation();
+			} else if (info == "publish_finished") {
+				//stream is being finished
+				console.debug("publish finished");
+				stop_publish_button.disabled = true;
+			}
+			else if (info == "closed") {
+				//console.log("Connection closed");
+				if (typeof obj != "undefined") {
+					console.log("Connecton closed: " + JSON.stringify(obj));
+				}
+			}
+		},
+		callbackError : function(error, message) {
+			//some of the possible errors, NotFoundError, SecurityError,PermissionDeniedError
+            
+			console.log("error callback: " +  JSON.stringify(error));
+			var errorMessage = JSON.stringify(error);
+			if (typeof message != "undefined") {
+				errorMessage = message;
+			}
+			var errorMessage = JSON.stringify(error);
+			if (error.indexOf("NotFoundError") != -1) {
+				errorMessage = "Camera or Mic are not found or not allowed in your device";
+			}
+			else if (error.indexOf("NotReadableError") != -1 || error.indexOf("TrackStartError") != -1) {
+				errorMessage = "Camera or Mic is being used by some other process that does not let read the devices";
+			}
+			else if(error.indexOf("OverconstrainedError") != -1 || error.indexOf("ConstraintNotSatisfiedError") != -1) {
+				errorMessage = "There is no device found that fits your video and audio constraints. You may change video and audio constraints"
+			}
+			else if (error.indexOf("NotAllowedError") != -1 || error.indexOf("PermissionDeniedError") != -1) {
+				errorMessage = "You are not allowed to access camera and mic.";
+			}
+			else if (error.indexOf("TypeError") != -1) {
+				errorMessage = "Video/Audio is required";
+			}
+		
+			alert(errorMessage);
+		}
+	});}
+	if(enablePublish=="1")
+	initial(false);
+	if(enablePublish=="0")
+		initial(true);
+
+	function removeVid(param)
+	{
+		var elem = document.getElementById(param);
+		elem.parentNode.removeChild(elem);
+		console.log(elem);
+		var found=0;
+		if(param=centerId){
+			console.log("searchfornew1" + found);
+			for(var key in remoteVideos) {
+				document.getElementById("remoteVideo0").srcObject = remoteVideos[key].srcObject;
+				remoteVideos[key].setAttribute("hidden", true);
+				centerId=key;
+				found=1;
+				console.log("searchfornewfor" + key);
+				break;
+			}
+			if(found==0)
+			{
+				document.getElementById("remoteVideo0").srcObject=document.getElementById("localVideo").srcObject;
+				document.getElementById("localVideo").setAttribute("hidden", true);
+			}
+			console.log("searchfornew2" + found);
+		}		
+	}
+
+	function addVideo(streamId)
+	{
+		var videoContainer = document.createElement("VIDEO");
+		videoContainer.id=(streamId);
+		videoContainer.onclick = function(){change(streamId)};
+		document.getElementById("remoteList").appendChild(videoContainer);
+		videoContainer.autoplay = true;
+		videoContainer.setAttribute("style", "border-radius: 10px");
+		
+		
+	}
+
+	function change(param)
+	{
+
+		document.getElementById(param).setAttribute("hidden", true);
+		document.getElementById(centerId).removeAttribute("hidden");
+		document.getElementById("remoteVideo0").srcObject=remoteVideos[param].srcObject;
+		centerId=param;
+	}
+
+	var en=0;
+
+	function shareScreen(){en=1; window.postMessage("audio-plus-tab", "*");}
+
+     	window.addEventListener("message", function (message) {if(en==1){
+            console.log("Message is received ");
+            console.debug(message);
+
+            if (message.data == "rtcmulticonnection-extension-loaded") {
+                console.log("rtcmulticonnection-extension-loaded parameter is received");
+ 
+            }
+            else if (message.data == "PermissionDeniedError") {
+                console.log("Permission denied error")
+            }
+            else if (message.data && message.data.sourceId) {
+                mediaConstraints = {
+                    audio: false,
+                    video: {
+                        mandatory: {
+                            chromeMediaSource: 'desktop',
+                            chromeMediaSourceId: message.data.sourceId
+                        },
+                        optional: []
+                    }
+		    
+                    };
+		webRTCAdaptor.screenVideo(localVid,mediaConstraints);		
+            }
+		
+        }}, false);
+
+	function muteMic(){webRTCAdaptor.localStream.getAudioTracks()[0].enabled = false;
+			document.getElementById("mute_button").setAttribute("hidden",true);
+			document.getElementById("mute_button").onclick = function() {unmuteMic()};
+			document.getElementById("mute_button").innerHTML="<i class='fa fa-microphone-slash fa-3x' style='padding: 10px;'></i>";	
+			document.getElementById("mute_button").removeAttribute("hidden");	
+		}
+	function camOff(){
+			webRTCAdaptor.localVideo.srcObject.getVideoTracks()[0].enabled = false;
+			document.getElementById("cam_button").setAttribute("hidden",true);
+			document.getElementById("cam_button").onclick = function() {camOn()};
+			document.getElementById("cam_button").innerHTML="<i class='fas fa-video-slash fa-3x' style='padding: 10px;'></i>";
+			document.getElementById("cam_button").removeAttribute("hidden");
+		}
+	function unmuteMic(){webRTCAdaptor.localStream.getAudioTracks()[0].enabled = true;
+			document.getElementById("mute_button").setAttribute("hidden",true);
+			document.getElementById("mute_button").onclick = function() {muteMic()};
+			document.getElementById("mute_button").innerHTML="<i class='fa fa-microphone fa-3x' style='padding: 10px;'></i>";
+			document.getElementById("mute_button").removeAttribute("hidden");
+		}
+	function camOn(){webRTCAdaptor.localVideo.srcObject.getVideoTracks()[0].enabled = true;
+			document.getElementById("cam_button").setAttribute("hidden",true);
+			document.getElementById("cam_button").onclick = function() {camOff()};
+			document.getElementById("cam_button").innerHTML="<i class='fas fa-video fa-3x' style='padding: 10px;'></i>";
+			document.getElementById("cam_button").removeAttribute("hidden");		
+		}
+	function getParameterByName(name, url) {
+    		if (!url) url = window.location.href;
+   	 	name = name.replace(/[\[\]]/g, '\\$&');
+    		var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        	results = regex.exec(url);
+    		if (!results) return null;
+    		if (!results[2]) return '';
+    		return decodeURIComponent(results[2].replace(/\+/g, ' '));
+	}
+	function sleep(milliseconds) {
+  		var start = new Date().getTime();
+  		for (var i = 0; i < 1e7; i++) {
+    		if ((new Date().getTime() - start) > milliseconds){
+      			break;
+    			}
+  		}
+	}
+
+	var rafID = null;
+	var treshold=0.1;
+	var speakerList=new Array();
+	var meterList = new Array();
+	 function testAudio(streamId) {
+	    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+	    var audioContext = new AudioContext();
+	    mediaStreamSource = audioContext.createMediaStreamSource(remoteVideos[streamId].captureStream());
+	    meterList[streamId] = createAudioMeter(audioContext);
+	    mediaStreamSource.connect(meterList[streamId]);
+	    drawLoop();
+
+	}
+
+
+	function drawLoop( ) {
+		for(var key in meterList) {
+	    		if(meterList[key].volume>treshold){
+				speakerList[key]=2000;
+	    			remoteVideos[key].setAttribute("style", "animation: blink .5s step-end infinite alternate;border: 2px dashed transparent");	
+			}
+			else{
+				speakerList[key]--;
+				if(speakerList[key]<=0)
+					remoteVideos[key].setAttribute("style"," ");
+			}
+		}
+		
+	    rafID = window.requestAnimationFrame( drawLoop );
+	}
+
+
+   
+</script>
+<script src="js/record.js"></script>
+</html>

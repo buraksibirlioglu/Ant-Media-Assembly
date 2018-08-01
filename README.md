@@ -2,7 +2,7 @@
 Webinar &amp; Video Conferencing Application Build on Ant-Media-Server
 ## Ant Media Assembly
 
-Web-based seminar (Webinar) is a presentation, lecture,workshop or seminar that is transmitted over the Web using video streaming services. Key feature of webinar is the ability to share receive and discuss information in real time via video conferencing software.Today's globalized world compels companies to use video conference software for increasing productivity We are glad to present [Assembly v1.0.0](https://github.com/buraksibirlioglu/Ant-Media-Assembly) Alpha which enables many-to-many video conferences using Ant-Media-Server platform. If you are interested in low latency webinars here is Assembly!
+Web-based seminar (Webinar) is a presentation, lecture,workshop or seminar that is transmitted over the Web using video streaming services. Key feature of webinar is the ability to share receive and discuss information in real time via video conferencing software.Today's globalized world compels companies to use video conference software for increasing productivity and save time. We are glad to present [Assembly v1.0.0](https://github.com/buraksibirlioglu/Ant-Media-Assembly) Alpha which enables many-to-many video conferences using Ant-Media-Server platform. If you are interested in low latency webinars here is Assembly!
 
 ![](https://user-images.githubusercontent.com/25819600/43515481-472dae22-958b-11e8-9694-fb45b558dee5.png)
 ## How Assembly Works ?

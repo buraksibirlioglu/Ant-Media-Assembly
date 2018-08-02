@@ -19,7 +19,8 @@ Ant-Media-Server enables video streaming and receiving applications with accurac
 * If you have Ant-Media-Server installed on your host you can start using Assembly.
 * Locate the Ant-Media-Server directory in your host machine.
 
-```$ cd webapps
+```
+$ cd webapps
 $ git clone https://github.com/buraksibirlioglu/Ant-Media-Assembly
 $ cp -a Ant-Media-Assembly/. WebRTCAppEE/
 $ rm -rf Ant-Media-Assembly

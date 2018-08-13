@@ -139,13 +139,67 @@ function WebRTCAdaptor(initialValues)
 		}
 	}
 	
+	this.sendChatMessage = function (message,streamId,id,user)
+	{
+		var jsCmd = {
+				command : "chatMessage",
+				streamId : streamId,
+				chatMessage: message,
+				messageId : id,
+				userName : user, 
+		};
+
+		thiz.webSocketAdaptor.send(JSON.stringify(jsCmd));
+		
+		
+		
+	}
+
+	this.askforFloor = function (streamId,user)
+	{
+		var jsCmd = {
+				command : "askforFloor",
+				streamId : streamId,
+				userName : user, 
+		}
+		thiz.webSocketAdaptor.send(JSON.stringify(jsCmd));
+	}
+	
+	this.giveFloor = function (streamId)
+	{
+		var jsCmd = {
+				command : "giveFloor",
+				streamId : streamId,
+		}
+		thiz.webSocketAdaptor.send(JSON.stringify(jsCmd));
+	}
+
+	this.getBackFloor = function (streamId)
+	{
+		var jsCmd = {
+				command : "getBackFloor",
+				streamId : streamId,
+		}
+		thiz.webSocketAdaptor.send(JSON.stringify(jsCmd));
+	}
+
+	this.shareUserName = function (streamId,userName)
+	{
+		var jsCmd = {
+				command : "shareUserName",
+				streamId : streamId,
+				userName : userName,
+		}
+		thiz.webSocketAdaptor.send(JSON.stringify(jsCmd));	
+	}
+	
 	this.publish = function (streamId) {
 
 		var jsCmd = {
 				command : "publish",
 				streamId : streamId,
 				video: thiz.mediaConstraints.video == false ? false : true,
-						audio: thiz.mediaConstraints.audio == false ? false : true,
+				audio: thiz.mediaConstraints.audio == false ? false : true,
 		};
 
 
@@ -523,8 +577,9 @@ function WebRTCAdaptor(initialValues)
 		}
 
 		wsConn.onmessage = function(event) {
+			
 			var obj = JSON.parse(event.data);
-
+			console.log("handlerEvent Adapter Come"+obj.command);
 			if (obj.command == "start") 
 			{
 				//this command is received first, when publishing so playmode is false
@@ -551,6 +606,25 @@ function WebRTCAdaptor(initialValues)
 				thiz.takeConfiguration(obj.streamId, obj.sdp, obj.type);
 
 			}
+			else if (obj.command == "chatMessage") {
+				thiz.callback(obj.definition, obj);
+			}
+			else if(obj.command == "askforFloor")
+			{
+				thiz.callback(obj.definition, obj);
+			}
+			else if(obj.command == "giveFloor")
+			{
+				thiz.callback(obj.definition,obj);			
+			}
+			else if(obj.command == "getBackFloor")
+			{
+				thiz.callback(obj.definition,obj);			
+			}
+			else if(obj.command == "shareUserName")
+			{
+				thiz.callback(obj.definition,obj);			
+			}			
 			else if (obj.command == "stop") {
 				console.debug("Stop command received");
 				thiz.closePeerConnection(obj.streamId);

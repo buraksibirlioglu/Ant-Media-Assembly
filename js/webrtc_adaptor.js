@@ -613,8 +613,9 @@ function WebRTCAdaptor(initialValues)
 			{
 				thiz.callback(obj.definition, obj);
 			}
-			else if(obj.command == "giveFloor")
+			else if(obj.command == "givePermission")
 			{
+				console.log("callbakc is called")
 				thiz.callback(obj.definition,obj);			
 			}
 			else if(obj.command == "blockPermission")

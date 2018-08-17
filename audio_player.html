@@ -101,7 +101,7 @@ body {
 			<!--  
 				<video id="remoteVideo" autoplay controls></video>
 				-->
-				<audio id="remoteVideo" autoplay controls></audio>
+				<video id="remoteVideo" autoplay controls></video>
 			</p>
 			<p>
 				<input type="text" class="form-control" value="stream1"
@@ -147,14 +147,14 @@ body {
 
 	};
 	var mediaConstraints = {
-		video : false,
-		audio : false
+		video : true,
+		audio : true
 	};
 	
-	var websocketURL = "ws://" + location.hostname + ":8081/WebRTCAppEE";
+	var websocketURL = "ws://" + location.hostname + ":5080/WebRTCAppEE/websocket";
 	
 	if (location.protocol.startsWith("https")) {
-		websocketURL = "wss://" + location.hostname + ":8082/WebRTCAppEE";
+		websocketURL = "wss://" + location.hostname + ":5443/WebRTCAppEE/websocket";
 	}
 	
 	var webRTCAdaptor = new WebRTCAdaptor({

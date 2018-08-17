@@ -41,49 +41,6 @@
 	color:black !important;
 	font-weight:  bold;
 }
-.switch input { 
-    display:none;
-}
-.switch {
-    display:inline-block;
-    width:60px;
-    height:30px;
-    margin:8px;
-    transform:translateY(50%);
-    position:relative;
-}
-
-.slider {
-    position:absolute;
-    top:0;
-    bottom:0;
-    left:0;
-    right:0;
-    border-radius:30px;
-    box-shadow:0 0 0 2px #777, 0 0 4px #777;
-    cursor:pointer;
-    border:4px solid transparent;
-    overflow:hidden;
-     transition:.4s;
-}
-.slider:before {
-    position:absolute;
-    content:"";
-    width:100%;
-    height:100%;
-    background:#777;
-    border-radius:30px;
-    transform:translateX(-30px);
-    transition:.4s;
-}
-
-input:checked + .slider:before {
-    transform:translateX(30px);
-    background:limeGreen;
-}
-input:checked + .slider {
-    box-shadow:0 0 0 2px limeGreen,0 0 2px limeGreen;
-}
 </style>
 
 <body>
@@ -98,20 +55,13 @@ input:checked + .slider {
    <div class="row" style="margin-bottom: 40px;">
       <div class="col-md-12 align-self-center text-center text-md-left">
 			<label class="col-form-label-lg" >Room Name</label>
-			<input type="text" id="roomName" class="form-control" style=" display:  -webkit-box; width:  -webkit-fill-available;"><br>
+			<input type="text" id="roomName" placeholder="" class="form-control" style=" display:  -webkit-box; width:  -webkit-fill-available;"><br>
         </div>
           <div class="col-md-6">
           </div>
           <div class="col-md-6">
 			<div class="row" style="float: right;margin-right: 5px;">
-			<div style="margin-right: 20px;" >
-       			 	<label class="switch" >
-            			<input id="togglePub" type="checkbox" checked=true>
-            			<span class="slider" id="toggleSwitch"></span>
-        			</label>
-        			<label id="toggleText" >Pusblisher</label>
-   			 </div>
-            <a id="joinButton" class="btn btn-secondary" onclick="joinRoom()" style="padding: 20px;">Join Room</a>
+            <a id="joinButton" class="btn btn-secondary" onclick="joinRoom()" style="padding: 20px;">Create Room</a>
 			</div>
 		  </div>
 
@@ -122,22 +72,25 @@ input:checked + .slider {
     </div>
   </div>
   <script>
-	var en=1;
-	document.getElementById('toggleSwitch').addEventListener('click', function (event) {            
-		if(en==0){
-			en=1;
-			document.getElementById('toggleText').innerHTML = "Publisher";		
-		}
-		else{
-			en=0;
-			document.getElementById('toggleText').innerHTML = "Audience";		
-		}
-		console.log(en);
-        });
+	var randomName="randomName"+(Math.floor(Math.random() * 1000) + 100);
+	var inputField = document.getElementById ("roomName");
+	var showText = function (message, index, interval) {    
+		if (index < message.length) { 
+    			inputField.value += message[index++]; 
+    			setTimeout(function () { showText(message, index, interval); }, interval); 
+  		} 
+	}
+
+	showText(randomName, 0, 50);    
+
 	function joinRoom() {
 		var roomName = document.getElementById('roomName').value;
-		window.location.href = "assembly.html?room="+roomName+"&ep="+en;
+		if(roomName == null || roomName == "" )
+			roomName=inputField.placeholder;
+		var rndNumber=Math.floor(Math.random() * 10000000) + 1000000;
+		window.location.href = "assembly.html?room="+roomName+rndNumber+"&ep="+"11";
 	}
+	
   </script>
 </body>
 
